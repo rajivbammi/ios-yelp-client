@@ -8,40 +8,46 @@
 
 import UIKit
 
-class BusinessesViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, FiltersViewControllerDelegate {
+class BusinessesViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, FiltersViewControllerDelegate, UISearchBarDelegate {
 
     var businesses: [Business]!
+    var searchBar: UISearchBar!
+    
     @IBOutlet weak var tableView: UITableView!
     
     override func viewDidLoad() {
         super.viewDidLoad()
-
+       
+        // Adding search bar
+        searchBar = UISearchBar()
+        searchBar.sizeToFit()
+        searchBar.placeholder = "e.g. Sushi, cheeseburger"
+        navigationItem.titleView = searchBar
+        
         // For setting up tables rows
         tableView.delegate = self
         tableView.dataSource = self
+        searchBar.delegate = self
         
         // For layouts.
         tableView.rowHeight = UITableViewAutomaticDimension
         tableView.estimatedRowHeight = 150
+        
             
         Business.searchWithTerm("Restaurants", sort: .Distance, categories: ["asianfusion"], deals: false,completion: { (businesses: [Business]!, error: NSError!) -> Void in
             self.businesses = businesses
             self.tableView.reloadData()
-            /*for business in businesses {
-                println(business.name!)
-                println(business.address!)
-            }*/
         })
-        
-        /*Business.searchWithTerm("Restaurants", sort: .Distance, categories: ["asianfusion", "burgers"], deals: true) { (businesses: [Business]!, error: NSError!) -> Void in
+    }
+    
+    final func searchBar(searchBar: UISearchBar, textDidChange searchText: String) {
+      // Add filtering
+        if searchText != "" {
+          Business.searchWithTerm(searchText, sort: .Distance, categories: ["asianfusion"], deals: false,completion: { (businesses: [Business]!, error: NSError!) -> Void in
             self.businesses = businesses
             self.tableView.reloadData()
-
-            for business in businesses {
-                print(business.name!)
-                print(business.address!)
-            }
-        }*/
+           })
+        }
     }
 
     func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -53,11 +59,8 @@ class BusinessesViewController: UIViewController, UITableViewDataSource, UITable
     }
     
     func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
-       
         var cell = tableView.dequeueReusableCellWithIdentifier("BusinessCell",forIndexPath: indexPath) as! BusinessCell
-        
         cell.business = businesses[indexPath.row]
-        
        return cell
     }
     
