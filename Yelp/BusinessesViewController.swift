@@ -22,15 +22,15 @@ class BusinessesViewController: UIViewController, UITableViewDataSource, UITable
         
         // For layouts.
         tableView.rowHeight = UITableViewAutomaticDimension
-        tableView.estimatedRowHeight = 120
+        tableView.estimatedRowHeight = 150
             
-        Business.searchWithTerm("Restaurents", completion: { (businesses: [Business]!, error: NSError!) -> Void in
+        Business.searchWithTerm("Restaurants", sort: .Distance, categories: ["asianfusion"], deals: false,completion: { (businesses: [Business]!, error: NSError!) -> Void in
             self.businesses = businesses
             self.tableView.reloadData()
-            for business in businesses {
+            /*for business in businesses {
                 println(business.name!)
                 println(business.address!)
-            }
+            }*/
         })
         
         /*Business.searchWithTerm("Restaurants", sort: .Distance, categories: ["asianfusion", "burgers"], deals: true) { (businesses: [Business]!, error: NSError!) -> Void in
@@ -68,19 +68,41 @@ class BusinessesViewController: UIViewController, UITableViewDataSource, UITable
 
    
     override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
-       let navigationController = segue.destinationViewController as! UINavigationController
-       let filtersViewController = navigationController.topViewController as! FiltersViewController
-        
-       filtersViewController.delegate = self
-    }
-
-    func filtersViewController(filtersViewController: FiltersViewController, didUpdateFilters filters: [String : AnyObject]) {
-        var categories = filters["categories"] as? [String]
-        
-        Business.searchWithTerm("Restaurents", sort: .Distance, categories: categories, deals: true) { (businesses: [Business]!, error: NSError!) -> Void in
-            self.businesses = businesses
-            self.tableView.reloadData()
+        //super.prepareForSegue(segue, sender: sender)
+        if segue.destinationViewController is UINavigationController {
+            let navigationController = segue.destinationViewController as! UINavigationController
             
+            if navigationController.viewControllers[0] is FiltersViewController {
+                let controller = navigationController.viewControllers[0] as! FiltersViewController
+                controller.delegate = self
+            }
         }
     }
+    
+    func getFilters() -> Dictionary<String, String> {
+        var param = Dictionary<String, String>()
+        for (key, value) in FilterList.instance.getParameters() {
+            param[key] = value
+        }
+        return param
+    }
+
+    
+    func onFilterSearch(controller: FiltersViewController) {
+      // Call search
+        var filters = getFilters()
+        var deals_filter = false
+        if (filters["deals_filter"] == "1") {
+            deals_filter = true
+        }
+        var categoryList = Array(arrayLiteral: String())
+        if (filters["category_filter"] != nil) {
+        categoryList = Array(arrayLiteral: filters["category_filter"]!)
+        }
+        
+        Business.searchWithTerm("Restaurants", sort: nil, categories: categoryList, deals: deals_filter) { (businesses: [Business]!, error: NSError!) -> Void in
+            self.businesses = businesses
+            self.tableView.reloadData()
+        }
+   }
 }
